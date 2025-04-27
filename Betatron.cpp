@@ -3,12 +3,14 @@
 #include <string>
 #include <vector>
 
+// Constructor
 Betatron::Betatron() {
     memory.resize(100, 0);  // Initialize memory with 100 locations, all set to 0
     accumulator = 0;        // Initialize accumulator to 0
     program_counter = 1;    // Start execution at memory location 1
 }
 
+// Read program from input until "RUN" is entered
 void Betatron::read_program() {
     std::string line;
     int address = 1;  // Start storing instructions at memory location 1
@@ -29,6 +31,7 @@ void Betatron::read_program() {
     }
 }
 
+// Execute the loaded program
 void Betatron::run_program() {
     while (program_counter < 100) {
         int instruction = memory[program_counter];
@@ -37,13 +40,21 @@ void Betatron::run_program() {
         int opcode = instruction / 100;  // First two digits: opcode
         int operand = instruction % 100; // Last two digits: operand
 
-        // Fetch-decode-execute cycle
         switch (opcode) {
             case 10:  // INPUT
                 if (operand == 0) {
                     std::cin >> accumulator;
                 } else {
-                    std::cin >> memory[operand];
+                    int value;
+                    std::cin >> value;
+                    // Ensure the value is within the valid range [0, 9999]
+                    if (value < 0) {
+                        memory[operand] = 0;
+                    } else if (value > 9999) {
+                        memory[operand] = 9999;
+                    } else {
+                        memory[operand] = value;
+                    }
                 }
                 break;
 
@@ -76,7 +87,14 @@ void Betatron::run_program() {
                 break;
 
             case 60:  // STORE
-                memory[operand] = accumulator;
+                // Ensure the value stored in memory is within [0, 9999]
+                if (accumulator < 0) {
+                    memory[operand] = 0;
+                } else if (accumulator > 9999) {
+                    memory[operand] = 9999;
+                } else {
+                    memory[operand] = accumulator;
+                }
                 break;
 
             case 70:  // JUMP
@@ -110,6 +128,7 @@ void Betatron::run_program() {
     }
 }
 
+// Print the current state of memory
 void Betatron::memory_dump() const {
     for (int i = 0; i < 100; ++i) {
         std::cout << "Memory[" << i << "]: " << memory[i] << "\n";
