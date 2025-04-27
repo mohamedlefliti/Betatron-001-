@@ -1,17 +1,34 @@
-#include "Betatron.h"
+#ifndef BETATRON_H
+#define BETATRON_H
+
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>  // for std::clamp
+
+
+class Betatron {
+private:
+    std::vector<int> memory;
+    int accumulator;
+    int program_counter;
+
+public:
+    Betatron();                // Constructor
+    void read_program();        // Read the program from input
+    void run_program();         // Execute the loaded program
+    void memory_dump() const;   // Print the memory contents
+};
 
 // Constructor
-Betatron::Betatron() {
+inline Betatron::Betatron() {
     memory.resize(100, 0);  // Initialize memory with 100 locations, all set to 0
     accumulator = 0;        // Initialize accumulator to 0
     program_counter = 1;    // Start execution at memory location 1
 }
 
 // Read program from input until "RUN" is entered
-void Betatron::read_program() {
+inline void Betatron::read_program() {
     std::string line;
     int address = 1;  // Start storing instructions at memory location 1
 
@@ -20,7 +37,6 @@ void Betatron::read_program() {
             break;  // Stop reading when "RUN" is encountered
         }
 
-        // Convert the line to an integer and store it in memory
         int instruction = std::stoi(line);
         if (address < 100) {
             memory[address++] = instruction;
@@ -32,7 +48,7 @@ void Betatron::read_program() {
 }
 
 // Execute the loaded program
-void Betatron::run_program() {
+inline void Betatron::run_program() {
     while (program_counter < 100) {
         int instruction = memory[program_counter];
         if (instruction == 0) break;  // HALT on encountering 0000
@@ -47,14 +63,7 @@ void Betatron::run_program() {
                 } else {
                     int value;
                     std::cin >> value;
-                    // Ensure the value is within the valid range [0, 9999]
-                    if (value < 0) {
-                        memory[operand] = 0;
-                    } else if (value > 9999) {
-                        memory[operand] = 9999;
-                    } else {
-                        memory[operand] = value;
-                    }
+                    memory[operand] = std::clamp(value, 0, 9999);
                 }
                 break;
 
@@ -87,18 +96,11 @@ void Betatron::run_program() {
                 break;
 
             case 60:  // STORE
-                // Ensure the value stored in memory is within [0, 9999]
-                if (accumulator < 0) {
-                    memory[operand] = 0;
-                } else if (accumulator > 9999) {
-                    memory[operand] = 9999;
-                } else {
-                    memory[operand] = accumulator;
-                }
+                memory[operand] = std::clamp(accumulator, 0, 9999);
                 break;
 
             case 70:  // JUMP
-                program_counter = operand - 1;  // Adjust for increment at end of loop
+                program_counter = operand - 1;  // -1 because we'll increment later
                 break;
 
             case 71:  // JUMPPOS
@@ -129,8 +131,10 @@ void Betatron::run_program() {
 }
 
 // Print the current state of memory
-void Betatron::memory_dump() const {
+inline void Betatron::memory_dump() const {
     for (int i = 0; i < 100; ++i) {
         std::cout << "Memory[" << i << "]: " << memory[i] << "\n";
     }
 }
+
+#endif // BETATRON_H
